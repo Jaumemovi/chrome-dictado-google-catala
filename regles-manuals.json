@@ -31,6 +31,22 @@
     {
       "from": "trelló",
       "to": "Trello"
+    },
+    {
+      "from": "girofits",
+      "to": "Girofeeds"
+    },
+    {
+      "from": "cerees",
+      "to": "tareas"
+    },
+    {
+      "from": "paredes",
+      "to": "tareas"
+    },
+    {
+      "from": "teres",
+      "to": "tareas"
     }
   ]
 }
