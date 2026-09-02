@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>Entrenament · Dictat en català</title>
+  <link rel="stylesheet" href="training.css">
+</head>
+<body>
+  <header>
+    <h1>Dictat en català <span class="sub">entrenament de pronunciació</span></h1>
+    <nav class="tabs">
+      <button class="tab is-active" data-tab="train">Entrenament</button>
+      <button class="tab" data-tab="rules">Regles apreses</button>
+      <button class="tab" data-tab="corpus">El meu corpus</button>
+      <button class="tab" data-tab="data">Dades i ajustos</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ENTRENAMENT -->
+    <section id="panel-train" class="panel is-active">
+      <div id="train-idle" class="card center">
+        <p class="lead">Llegeix unes quantes frases en veu alta. L'extensió compara el que havies de llegir amb el que Chrome ha entès i n'aprèn els teus errors recurrents.</p>
+        <p class="muted" id="idle-stats"></p>
+        <label class="inline">Frases per sessió
+          <select id="session-size">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="40">40</option>
+          </select>
+        </label>
+        <button id="start-session" class="primary big">Comença la sessió</button>
+        <p class="hint">La primera vegada Chrome et demanarà permís per al micròfon.</p>
+      </div>
+
+      <div id="train-active" hidden>
+        <div class="progress"><div id="progress-bar"></div></div>
+        <p class="muted" id="progress-label"></p>
+
+        <div class="card">
+          <p class="label">Llegeix en veu alta</p>
+          <p id="sentence" class="sentence"></p>
+          <p id="status" class="status">Prem <kbd>Espai</kbd> o el botó per començar a escoltar.</p>
+        </div>
+
+        <div id="result" class="card" hidden>
+          <p class="label">Chrome ha entès</p>
+          <p id="diff-hyp" class="diff"></p>
+          <p class="label">Comparat amb l'original</p>
+          <p id="diff-ref" class="diff"></p>
+          <p id="wer" class="muted"></p>
+          <p id="learned" class="learned"></p>
+        </div>
+
+        <div class="actions">
+          <button id="listen" class="primary">Escolta</button>
+          <button id="retry" hidden>Repeteix la frase</button>
+          <button id="next">Següent</button>
+          <button id="end-session" class="ghost">Acaba la sessió</button>
+        </div>
+      </div>
+
+      <div id="train-done" class="card center" hidden>
+        <p class="lead">Sessió acabada.</p>
+        <p id="done-summary" class="muted"></p>
+        <button id="again" class="primary">Una altra sessió</button>
+      </div>
+    </section>
+
+    <!-- REGLES -->
+    <section id="panel-rules" class="panel">
+      <div class="card">
+        <p class="label">Llindar d'aprenentatge</p>
+        <label class="inline">Aplica una correcció a partir de
+          <select id="min-count">
+            <option value="1">1 aparició (agressiu)</option>
+            <option value="2" selected>2 aparicions (recomanat)</option>
+            <option value="3">3 aparicions (conservador)</option>
+            <option value="4">4 aparicions</option>
+          </select>
+        </label>
+        <p class="hint">Un error que només ha passat un cop sol ser soroll, no un patró teu.</p>
+      </div>
+
+      <div class="card">
+        <p class="label">Afegeix una correcció a mà</p>
+        <div class="row">
+          <input id="manual-from" placeholder="el que se sent (giro feeds)">
+          <span class="arrow">→</span>
+          <input id="manual-to" placeholder="el que vull (Girofeeds)">
+          <button id="manual-add" class="primary">Afegeix</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="label">Diccionari actiu <span id="rules-count" class="muted"></span></p>
+        <table id="rules-table">
+          <thead><tr><th>Se sent</th><th>S'escriu</th><th>Cops</th><th>Origen</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="rules-empty" class="muted">Encara no hi ha cap regla. Fes una sessió d'entrenament.</p>
+      </div>
+
+      <div class="card">
+        <p class="label">Prova el diccionari</p>
+        <textarea id="try-input" rows="3" placeholder="Enganxa aquí un text tal com el transcriu Chrome i mira com queda corregit."></textarea>
+        <p id="try-output" class="diff"></p>
+      </div>
+    </section>
+
+    <!-- CORPUS -->
+    <section id="panel-corpus" class="panel">
+      <div class="card">
+        <p class="label">Les meves frases</p>
+        <p class="hint">Una frase per línia. Aquesta és la part que més fa: posa-hi els noms de clients, els termes tècnics i les frases que dictes de debò. Si una paraula no surt mai aquí, l'eina no pot aprendre a corregir-la.</p>
+        <textarea id="custom-corpus" rows="14" placeholder="El client Bersalis vol revisar el feed abans de dilluns.&#10;Puja el catàleg de Megasur al Merchant Center."></textarea>
+        <div class="row">
+          <button id="corpus-save" class="primary">Desa el corpus</button>
+          <span id="corpus-info" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="label">Termes propis per al desempat</p>
+        <p class="hint">Paraules que vols que l'extensió prefereixi quan Chrome dubta entre diverses transcripcions. Una per línia.</p>
+        <textarea id="vocab" rows="6" placeholder="Girofeeds&#10;Merchant Center"></textarea>
+        <button id="vocab-save" class="primary">Desa els termes</button>
+      </div>
+    </section>
+
+    <!-- DADES -->
+    <section id="panel-data" class="panel">
+      <div class="card">
+        <p class="label">Estadístiques</p>
+        <div class="stats" id="stats"></div>
+      </div>
+
+      <div class="card">
+        <p class="label">Comportament del dictat</p>
+        <label class="check"><input type="checkbox" id="opt-apply" checked> Aplica les correccions mentre dicto</label>
+        <label class="check"><input type="checkbox" id="opt-alts" checked> Tria entre diverses transcripcions de Chrome segons el meu vocabulari</label>
+        <label class="check"><input type="checkbox" id="opt-auto" checked> Passa a la frase següent automàticament</label>
+      </div>
+
+      <div class="card">
+        <p class="label">Còpia de seguretat</p>
+        <div class="row">
+          <button id="export">Exporta-ho tot (JSON)</button>
+          <button id="import-btn">Importa</button>
+          <input type="file" id="import-file" accept="application/json" hidden>
+        </div>
+      </div>
+
+      <div class="card danger">
+        <p class="label">Esborrar</p>
+        <div class="row">
+          <button id="clear-rules" class="ghost">Esborra només les regles</button>
+          <button id="clear-all" class="ghost">Esborra-ho tot</button>
+        </div>
+        <p class="hint">Les lectures es guarden com a text (referència i transcripció), mai com a àudio, i només al teu Chrome.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="corrections.js"></script>
+  <script src="align.js"></script>
+  <script src="corpus.js"></script>
+  <script src="training.js"></script>
+</body>
+</html>
