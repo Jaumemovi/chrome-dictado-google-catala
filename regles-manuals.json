@@ -1,0 +1,36 @@
+{
+  "manualRules": [
+    {
+      "from": "trillo",
+      "to": "Trello"
+    },
+    {
+      "from": "treillo",
+      "to": "Trello"
+    },
+    {
+      "from": "trello",
+      "to": "Trello"
+    },
+    {
+      "from": "guithaap",
+      "to": "GitHub"
+    },
+    {
+      "from": "girona diet",
+      "to": "Girodiet"
+    },
+    {
+      "from": "claud",
+      "to": "Claude"
+    },
+    {
+      "from": "còdexs",
+      "to": "Codex"
+    },
+    {
+      "from": "trelló",
+      "to": "Trello"
+    }
+  ]
+}
