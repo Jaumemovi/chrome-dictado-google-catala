@@ -55,6 +55,42 @@
     {
       "from": "t'estic a passant",
       "to": "t'estic passant"
+    },
+    {
+      "from": "urrera",
+      "to": "URL"
+    },
+    {
+      "from": "girofigits",
+      "to": "Girofeeds"
+    },
+    {
+      "from": "gogalats",
+      "to": "Google Ads"
+    },
+    {
+      "from": "google ats",
+      "to": "Google Ads"
+    },
+    {
+      "from": "perameta",
+      "to": "per a Meta"
+    },
+    {
+      "from": "format fcv",
+      "to": "format CSV"
+    },
+    {
+      "from": "contabilitat",
+      "to": "comptabilitat"
+    },
+    {
+      "from": "s'incronitzen",
+      "to": "sincronitzen"
+    },
+    {
+      "from": "tancant provacances",
+      "to": "tanquem per vacances"
     }
   ]
 }
