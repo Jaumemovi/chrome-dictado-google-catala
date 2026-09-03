@@ -47,6 +47,14 @@
     {
       "from": "teres",
       "to": "tareas"
+    },
+    {
+      "from": "quinze rus",
+      "to": "quins errors"
+    },
+    {
+      "from": "t'estic a passant",
+      "to": "t'estic passant"
     }
   ]
 }
