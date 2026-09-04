@@ -11,7 +11,12 @@
   const Corrections = window.__dictatCorrections_v1__ || null;
   const profile = window.__dictatProfile_v1__ || { rules: [], vocab: [], settings: {} };
   const ruleIndex = Corrections ? Corrections.buildIndex(profile.rules) : null;
-  const vocabIndex = Corrections ? Corrections.buildVocabIndex(profile.vocab) : null;
+  // Cada linia del vocabulari pot dur un pes ("Girofeeds | 8"): per al
+  // desempat nomes ens interessa la paraula.
+  const biasTerms = Corrections ? Corrections.parseVocab(profile.vocab) : [];
+  const vocabIndex = Corrections
+    ? Corrections.buildVocabIndex(biasTerms.map((term) => term.phrase))
+    : null;
   const useAlternatives = profile.settings.useAlternatives !== false && !!vocabIndex && vocabIndex.size > 0;
 
   // Entre les alternatives que retorna Chrome, ens quedem la que conte mes
@@ -307,6 +312,17 @@
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.maxAlternatives = useAlternatives ? 5 : 1;
+
+  // Termes probables cap al reconeixedor abans d'escoltar: el vocabulari mes
+  // la banda correcta de les regles apreses.
+  if (Corrections) {
+    const terms = biasTerms.concat(
+      (profile.rules || [])
+        .map((rule) => ({ phrase: rule.to, boost: Corrections.DEFAULT_BOOST }))
+        .filter((term) => term.phrase)
+    );
+    console.log("[dictat] biaix de reconeixement:", Corrections.applyPhraseBias(recognition, terms));
+  }
 
   // processLocally se deja en false/valor por defecto a proposito. Asi Chrome
   // puede utilizar su servicio de reconocimiento remoto cuando corresponda.

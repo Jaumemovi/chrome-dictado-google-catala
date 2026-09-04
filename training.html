@@ -122,9 +122,9 @@
       </div>
 
       <div class="card">
-        <p class="label">Termes propis per al desempat</p>
-        <p class="hint">Paraules que vols que l'extensió prefereixi quan Chrome dubta entre diverses transcripcions. Una per línia.</p>
-        <textarea id="vocab" rows="6" placeholder="Girofeeds&#10;Merchant Center"></textarea>
+        <p class="label">Paraules probables (biaix del reconeixedor)</p>
+        <p class="hint">Paraules que li passem a Chrome <strong>abans</strong> de reconèixer, perquè les prefereixi. Una per línia. Pots afegir un pes de 0 a 10 després d'una barra: <code>Girofeeds | 8</code>. Sense pes, s'aplica 5.</p>
+        <textarea id="vocab" rows="6" placeholder="Girofeeds | 8&#10;Merchant Center | 5&#10;Girodiet"></textarea>
         <button id="vocab-save" class="primary">Desa els termes</button>
       </div>
     </section>

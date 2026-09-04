@@ -229,13 +229,27 @@
     // es la que rebries dictant sense cap ajuda.
     recognition.maxAlternatives = 5;
 
+    // Termes probables CAP AL reconeixedor, abans d'escoltar. Hi van el teu
+    // vocabulari i tambe la banda correcta de les regles: son, per definicio,
+    // les paraules que Chrome et falla.
+    const biasTerms = C.parseVocab(store.vocab).concat(
+      activeRules()
+        .map((rule) => ({ phrase: rule.to, boost: C.DEFAULT_BOOST }))
+        .filter((term) => term.phrase)
+    );
+    session.biasStatus = C.applyPhraseBias(recognition, biasTerms);
+    console.log("[dictat] biaix de reconeixement:", session.biasStatus);
+
     let finalText = "";
     let bestOfAlternatives = null;
 
     recognition.onstart = () => {
       session.listening = true;
       $("listen").textContent = "Atura";
-      setStatus("Escoltant… llegeix la frase.", "listening");
+      const bias = session.biasStatus && session.biasStatus.indexOf("aplicats") < 0
+        ? " (biaix: " + session.biasStatus + ")"
+        : "";
+      setStatus("Escoltant… llegeix la frase." + bias, "listening");
     };
 
     recognition.onresult = (event) => {
@@ -297,7 +311,9 @@
 
   function pickByVocab(result) {
     const vocabIndex = C.buildVocabIndex(
-      store.vocab.concat(activeRules().map((rule) => rule.to).filter(Boolean))
+      C.parseVocab(store.vocab)
+        .map((term) => term.phrase)
+        .concat(activeRules().map((rule) => rule.to).filter(Boolean))
     );
     if (vocabIndex.size === 0) return null;
 

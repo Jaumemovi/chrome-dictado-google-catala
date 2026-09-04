@@ -169,7 +169,84 @@
     return index;
   }
 
-  const api = { MAX_N, normalize, tokenize, words, buildIndex, apply, buildVocabIndex, scoreAgainstVocab };
+  // -------------------------------------------------- biaix de reconeixement
+  //
+  // Chrome admet passar-li termes probables ABANS de reconeixer
+  // (contextual biasing). Es molt millor que corregir despres: actua sobre la
+  // decisio del reconeixedor, i per tant tambe pot salvar paraules que ara no
+  // arriba a escriure mai i que cap substitucio podria recuperar.
+  //
+  // Cada linia del vocabulari admet un pes opcional:  "Girofeeds | 8"
+
+  const DEFAULT_BOOST = 5;
+
+  function parseTerm(line) {
+    if (typeof line !== "string") return null;
+    const parts = line.split("|");
+    const phrase = parts[0].trim();
+    if (!phrase) return null;
+
+    let boost = DEFAULT_BOOST;
+    if (parts.length > 1) {
+      const parsed = parseFloat(parts[1].replace(",", ".").trim());
+      // L'especificacio accepta de 0 a 10; fora d'aqui Chrome ho rebutjaria.
+      if (!isNaN(parsed)) boost = Math.min(10, Math.max(0, parsed));
+    }
+    return { phrase: phrase, boost: boost };
+  }
+
+  function parseVocab(lines) {
+    const out = [];
+    for (const line of lines || []) {
+      const term = parseTerm(line);
+      if (term) out.push(term);
+    }
+    return out;
+  }
+
+  function phraseBiasSupported() {
+    return typeof SpeechRecognition !== "undefined" || typeof webkitSpeechRecognition !== "undefined";
+  }
+
+  // Aplica els termes al reconeixedor. Torna un text curt amb el que ha passat,
+  // per poder ensenyar-ho a la pantalla en comptes d'endevinar-ho.
+  //
+  // L'API encara s'esta assentant i la llista pot ser un array o un
+  // SpeechRecognitionPhraseList segons la versio, aixi que ho provem tot i, si
+  // res funciona, no passa res: el dictat continua sense biaix.
+  function applyPhraseBias(recognition, terms) {
+    if (!recognition || !terms || !terms.length) return "sense termes";
+
+    const Phrase = typeof SpeechRecognitionPhrase !== "undefined" ? SpeechRecognitionPhrase : null;
+    if (!Phrase) return "no suportat (falta SpeechRecognitionPhrase)";
+    if (!("phrases" in Object.getPrototypeOf(recognition))) return "no suportat (falta phrases)";
+
+    const items = [];
+    for (const term of terms) {
+      try {
+        items.push(new Phrase(term.phrase, term.boost));
+      } catch (error) {
+        // Un terme que l'API no accepti no ha de tombar la resta.
+      }
+    }
+    if (!items.length) return "cap terme acceptat per l'API";
+
+    const List = typeof SpeechRecognitionPhraseList !== "undefined" ? SpeechRecognitionPhraseList : null;
+    const candidates = List ? [() => new List(items), () => items] : [() => items];
+
+    for (const build of candidates) {
+      try {
+        recognition.phrases = build();
+        return items.length + " termes aplicats";
+      } catch (error) {
+        // Provem la forma seguent.
+      }
+    }
+    return "l'API ha rebutjat la llista";
+  }
+
+  const api = { MAX_N, normalize, tokenize, words, buildIndex, apply, buildVocabIndex, scoreAgainstVocab,
+                DEFAULT_BOOST, parseTerm, parseVocab, phraseBiasSupported, applyPhraseBias };
 
   if (typeof window !== "undefined") window[NS] = api;
   if (typeof globalThis !== "undefined") globalThis.DictatCorrections = api;
