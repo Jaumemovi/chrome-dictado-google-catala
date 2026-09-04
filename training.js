@@ -29,16 +29,58 @@
 
   // ---------------------------------------------------------------- magatzem
 
+  // Repartiment entre els dos magatzems de Chrome:
+  //
+  // - storage.sync  -> el que ESCRIUS tu (vocabulari, corpus propi, regles
+  //   manuals, ajustos). Chrome ho replica a tots els ordinadors on tinguis la
+  //   sessio iniciada, aixi que et segueix sol.
+  // - storage.local -> les lectures i les regles apreses. Son moltes (fins a
+  //   800 mostres, molt per sobre del limit de sync) i, sobretot, les regles es
+  //   recalculen de les mostres: si les sincronitzessim, cada ordinador
+  //   sobreescriuria les de l'altre amb les seves propies lectures.
+  const SYNC_KEYS = ["manualRules", "vocab", "customCorpus", "settings"];
+  const isSync = (key) => SYNC_KEYS.indexOf(key) >= 0;
+
   async function load() {
-    const stored = await chrome.storage.local.get(Object.keys(DEFAULTS));
-    store = Object.assign({}, DEFAULTS, stored);
-    store.settings = Object.assign({}, DEFAULTS.settings, stored.settings || {});
+    const localKeys = Object.keys(DEFAULTS).filter((key) => !isSync(key));
+    const [synced, local] = await Promise.all([
+      chrome.storage.sync.get(SYNC_KEYS),
+      chrome.storage.local.get(localKeys)
+    ]);
+
+    // Migracio dels perfils anteriors a la sincronitzacio: si una clau encara
+    // no es a sync pero si a local, la hi pugem un sol cop.
+    const missing = SYNC_KEYS.filter((key) => synced[key] === undefined);
+    if (missing.length) {
+      const previous = await chrome.storage.local.get(missing);
+      const patch = {};
+      for (const key of missing) {
+        if (previous[key] !== undefined) patch[key] = previous[key];
+      }
+      if (Object.keys(patch).length) {
+        await chrome.storage.sync.set(patch);
+        Object.assign(synced, patch);
+      }
+    }
+
+    store = Object.assign({}, DEFAULTS, local, synced);
+    store.settings = Object.assign({}, DEFAULTS.settings, synced.settings || {});
     return store;
   }
 
   async function save(patch) {
     Object.assign(store, patch);
-    await chrome.storage.local.set(patch);
+
+    const toSync = {};
+    const toLocal = {};
+    for (const key of Object.keys(patch)) {
+      (isSync(key) ? toSync : toLocal)[key] = patch[key];
+    }
+
+    const writes = [];
+    if (Object.keys(toSync).length) writes.push(chrome.storage.sync.set(toSync));
+    if (Object.keys(toLocal).length) writes.push(chrome.storage.local.set(toLocal));
+    await Promise.all(writes);
   }
 
   function corpus() {
@@ -586,8 +628,8 @@
     });
 
     $("clear-all").addEventListener("click", async () => {
-      if (!confirm("Esborrar totes les lectures, regles i estadístiques?")) return;
-      await chrome.storage.local.clear();
+      if (!confirm("Esborrar totes les lectures, regles i estadístiques?\n\nAtenció: el teu corpus, el vocabulari i les regles manuals estan sincronitzats, així que també desapareixeran de la resta d'ordinadors.")) return;
+      await Promise.all([chrome.storage.local.clear(), chrome.storage.sync.clear()]);
       location.reload();
     });
 

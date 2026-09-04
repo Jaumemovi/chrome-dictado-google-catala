@@ -1,5 +1,6 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzW1zsH0n3IJaYIkDUw+2JKWIoRBwQeBUQ5AZmyzoINAhjpFf9KGbJq28BuzCQhV5QlVvtDhRy/Fk2Zsg0XbkfnK37344hPyKi8GIuNKdgsxozEiU8/Ve9ZH4CIoHOZN2iVU5+yNeNJDYCex/1Z4BwlJ29U9VwWNtlleHRyxsQ8qdRdEyP/GgxB9rRpnEJ8+mloDQYMOohCG2Ayjl9y/ZaYDIJ64zuqRiPFGMjwwLokr1+PTiNjQAvkJXcimpjGQT4KjqxxqS/xoCXiHferSJ7mSxL3NMmuTyMYbePceH5Wj7mlDUWlclv1L8to5VHwHL5hjV2p84yNU07nlYfqUHYwIDAQAB",
   "name": "Dictat en català",
   "version": "1.1.0",
   "description": "Dictat de veu en català a la pestanya activa mitjançant la Web Speech API de Chrome, amb un diccionari de correccions entrenat amb la teva veu. Sense servidors propis.",

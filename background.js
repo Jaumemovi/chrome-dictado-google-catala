@@ -4,7 +4,14 @@ const DEFAULT_SETTINGS = { useAlternatives: true, applyCorrections: true };
 // worker es l'unic que pot tocar chrome.storage: dictation.js viu al mon MAIN
 // de la pagina i alli les APIs de chrome no hi arriben.
 async function loadProfile() {
-  const stored = await chrome.storage.local.get(["rules", "manualRules", "vocab", "settings"]);
+  // Les regles apreses surten de les lectures d'aquest ordinador (local);
+  // les manuals, el vocabulari i els ajustos els escrius tu i et segueixen
+  // a tots els ordinadors (sync).
+  const [local, synced] = await Promise.all([
+    chrome.storage.local.get(["rules"]),
+    chrome.storage.sync.get(["manualRules", "vocab", "settings"])
+  ]);
+  const stored = Object.assign({}, local, synced);
   const settings = Object.assign({}, DEFAULT_SETTINGS, stored.settings || {});
 
   const derived = (stored.rules || []).filter((rule) => rule && !rule.disabled);
