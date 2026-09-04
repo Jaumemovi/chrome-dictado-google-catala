@@ -8,7 +8,12 @@
   "use strict";
 
   const NS = "__dictatCorrections_v1__";
-  if (typeof window !== "undefined" && window[NS]) return;
+  // La guarda ha de ser per VERSIO, no per presencia. Si nomes miressim si hi
+  // ha alguna cosa, una pestanya que ja tingues una copia antiga no s'
+  // actualitzaria mai i cridariem funcions que alli encara no existeixen.
+  // Puja aquest numero cada cop que canvii el que exporta el modul.
+  const VERSION = 2;
+  if (typeof window !== "undefined" && window[NS] && window[NS].version >= VERSION) return;
 
   const MAX_N = 5;
   const WORD_RE = /[\p{L}\p{N}'’·-]+/gu;
@@ -245,7 +250,8 @@
     return "l'API ha rebutjat la llista";
   }
 
-  const api = { MAX_N, normalize, tokenize, words, buildIndex, apply, buildVocabIndex, scoreAgainstVocab,
+  const api = { version: VERSION,
+                MAX_N, normalize, tokenize, words, buildIndex, apply, buildVocabIndex, scoreAgainstVocab,
                 DEFAULT_BOOST, parseTerm, parseVocab, phraseBiasSupported, applyPhraseBias };
 
   if (typeof window !== "undefined") window[NS] = api;

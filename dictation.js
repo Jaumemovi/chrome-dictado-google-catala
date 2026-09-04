@@ -13,7 +13,14 @@
   const ruleIndex = Corrections ? Corrections.buildIndex(profile.rules) : null;
   // Cada linia del vocabulari pot dur un pes ("Girofeeds | 8"): per al
   // desempat nomes ens interessa la paraula.
-  const biasTerms = Corrections ? Corrections.parseVocab(profile.vocab) : [];
+  // Defensiu: si en aquesta pestanya hi hagues quedat una copia antiga del
+  // modul, parseVocab pot no existir-hi. Millor un desdoblament senzill que
+  // tombar tot el dictat.
+  const biasTerms = Corrections && Corrections.parseVocab
+    ? Corrections.parseVocab(profile.vocab)
+    : (profile.vocab || [])
+        .map((line) => ({ phrase: String(line).split("|")[0].trim(), boost: 5 }))
+        .filter((term) => term.phrase);
   const vocabIndex = Corrections
     ? Corrections.buildVocabIndex(biasTerms.map((term) => term.phrase))
     : null;
@@ -315,7 +322,7 @@
 
   // Termes probables cap al reconeixedor abans d'escoltar: el vocabulari mes
   // la banda correcta de les regles apreses.
-  if (Corrections) {
+  if (Corrections && Corrections.applyPhraseBias) {
     const terms = biasTerms.concat(
       (profile.rules || [])
         .map((rule) => ({ phrase: rule.to, boost: Corrections.DEFAULT_BOOST }))
