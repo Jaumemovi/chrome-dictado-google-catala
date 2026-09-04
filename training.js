@@ -17,7 +17,7 @@
     vocab: [],
     customCorpus: "",
     sessions: [],
-    settings: { minCount: 2, applyCorrections: true, useAlternatives: true, autoAdvance: true }
+    settings: { minCount: 2, applyCorrections: true, useAlternatives: true, autoAdvance: true, preferLocal: false }
   };
 
   let store = null;
@@ -229,15 +229,25 @@
     // es la que rebries dictant sense cap ajuda.
     recognition.maxAlternatives = 5;
 
-    // Termes probables CAP AL reconeixedor, abans d'escoltar. Hi van el teu
-    // vocabulari i tambe la banda correcta de les regles: son, per definicio,
-    // les paraules que Chrome et falla.
-    const biasTerms = C.parseVocab(store.vocab).concat(
-      activeRules()
-        .map((rule) => ({ phrase: rule.to, boost: C.DEFAULT_BOOST }))
-        .filter((term) => term.phrase)
-    );
-    session.biasStatus = C.applyPhraseBias(recognition, biasTerms);
+    // El biaix de frases nomes el permet Chrome amb reconeixement LOCAL: amb el
+    // servei remot, start() peti amb "phrases-not-supported". Van lligats.
+    const preferLocal = store.settings.preferLocal === true;
+    if ("processLocally" in recognition) {
+      recognition.processLocally = preferLocal;
+    }
+
+    if (preferLocal) {
+      // Hi van el teu vocabulari i la banda correcta de les regles: son, per
+      // definicio, les paraules que Chrome et falla.
+      const biasTerms = C.parseVocab(store.vocab).concat(
+        activeRules()
+          .map((rule) => ({ phrase: rule.to, boost: C.DEFAULT_BOOST }))
+          .filter((term) => term.phrase)
+      );
+      session.biasStatus = C.applyPhraseBias(recognition, biasTerms);
+    } else {
+      session.biasStatus = "desactivat (cal reconeixement local)";
+    }
     console.log("[dictat] biaix de reconeixement:", session.biasStatus);
 
     let finalText = "";
@@ -272,6 +282,8 @@
         setStatus("Micròfon bloquejat. Permet-lo per a aquesta pàgina i torna-ho a provar.", "");
       } else if (error === "no-speech") {
         setStatus("No s'ha sentit res. Torna-ho a provar.", "");
+      } else if (error === "phrases-not-supported") {
+        setStatus("Aquest Chrome no accepta el biaix de paraules amb aquesta configuració. Desactiva el reconeixement local a Dades i ajustos.", "");
       } else if (error !== "aborted") {
         setStatus("Error de reconeixement: " + error, "");
       }
@@ -602,7 +614,7 @@
       renderStats();
     });
 
-    for (const [id, key] of [["opt-apply", "applyCorrections"], ["opt-alts", "useAlternatives"], ["opt-auto", "autoAdvance"]]) {
+    for (const [id, key] of [["opt-apply", "applyCorrections"], ["opt-alts", "useAlternatives"], ["opt-auto", "autoAdvance"], ["opt-local", "preferLocal"]]) {
       $(id).checked = store.settings[key] !== false;
       $(id).addEventListener("change", async () => {
         const settings = Object.assign({}, store.settings);

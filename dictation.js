@@ -320,21 +320,23 @@
   recognition.interimResults = true;
   recognition.maxAlternatives = useAlternatives ? 5 : 1;
 
-  // Termes probables cap al reconeixedor abans d'escoltar: el vocabulari mes
-  // la banda correcta de les regles apreses.
-  if (Corrections && Corrections.applyPhraseBias) {
+  // El biaix de frases nomes el permet Chrome amb reconeixement LOCAL. Amb el
+  // servei remot, assignar-hi phrases fa que start() peti amb
+  // "phrases-not-supported". Per aixo van lligats: si no anem en local, no hi
+  // ha biaix i el dictat funciona com sempre.
+  const preferLocal = profile.settings.preferLocal === true;
+
+  if ("processLocally" in recognition) {
+    recognition.processLocally = preferLocal;
+  }
+
+  if (preferLocal && Corrections && Corrections.applyPhraseBias) {
     const terms = biasTerms.concat(
       (profile.rules || [])
         .map((rule) => ({ phrase: rule.to, boost: Corrections.DEFAULT_BOOST }))
         .filter((term) => term.phrase)
     );
     console.log("[dictat] biaix de reconeixement:", Corrections.applyPhraseBias(recognition, terms));
-  }
-
-  // processLocally se deja en false/valor por defecto a proposito. Asi Chrome
-  // puede utilizar su servicio de reconocimiento remoto cuando corresponda.
-  if ("processLocally" in recognition) {
-    recognition.processLocally = false;
   }
 
   const state = {
@@ -392,6 +394,15 @@
     if (error === "audio-capture") {
       state.shouldContinue = false;
       showOverlay("No se encuentra un microfono disponible.", "error", 5000);
+      return;
+    }
+
+    // Xarxa de seguretat: si Chrome rebutja el biaix, el retirem i seguim
+    // dictant sense ell en comptes de deixar l'usuari sense dictat.
+    if (error === "phrases-not-supported") {
+      try { recognition.phrases = []; } catch (_) {}
+      try { recognition.processLocally = false; } catch (_) {}
+      showOverlay("El biaix de paraules no es compatible aqui; segueixo sense ell.", "error", 3000);
       return;
     }
 
